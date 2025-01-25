@@ -28,6 +28,12 @@ erDiagram
     AIService ||--o{ Summary : utilize
     AIService ||--o{ Embedding : search
 
+    %% 스케줄러 관계
+    Scheduler ||--o{ CleanedData : "daily_clean"
+    Scheduler ||--o{ Summary : "weekly_create"
+    Scheduler ||--o{ Embedding : "weekly_embed"
+    Scheduler ||--o{ Feedback : "daily_generate"
+
     User {
         int id PK
         string username
@@ -107,6 +113,13 @@ erDiagram
         string recommend "Pattern-based Recommendations"
         string analyze "Data Analysis & Feedback"
     }
+
+    %% 스케줄러 (논리적 엔티티)
+    Scheduler {
+        string daily "Daily data processing at midnight"
+        string weekly "Weekly summary on Monday"
+        string cleanup "Data cleanup and maintenance"
+    }
 ```
 
 ## 데이터 처리 흐름도
@@ -117,6 +130,12 @@ graph TD
     U[User] --> |작성| D[Diary]
     U --> |등록| S[Schedule]
     U --> |등록| T[Todo]
+    
+    %% 자동화 처리
+    subgraph Scheduler[스케줄러]
+        Daily[Daily Job]
+        Weekly[Weekly Job]
+    end
     
     %% AI 처리
     subgraph Processing[데이터 처리]
@@ -131,6 +150,12 @@ graph TD
         C[Chatbot]
         R[Recommend]
     end
+    
+    %% 스케줄러 처리
+    Daily --> |매일 자정| CD
+    Daily --> |매일 생성| F
+    Weekly --> |매주 월요일| SM
+    Weekly --> |매주 생성| E
     
     %% AI 상호작용
     CD --> |컨텍스트| AI
@@ -154,7 +179,18 @@ graph TD
    - `Embedding`: 벡터화된 요약
    - `Feedback`: AI 생성 피드백
 
-### AI 서비스
+### 자동화 처리 (`scheduler.py`)
+1. **일일 작업**
+   - 매일 자정 실행
+   - 전날 데이터 정제 (`CleanedData` 생성)
+   - AI 피드백 생성 (`Feedback` 생성)
+
+2. **주간 작업**
+   - 매주 월요일 실행
+   - 주간 요약 생성 (`Summary` 생성)
+   - 요약 임베딩 생성 (`Embedding` 생성)
+
+### AI 서비스 (`llm_service.py`)
 1. **Chatbot**
    - 자연어 인터페이스
    - 일정/할일 관리
@@ -163,12 +199,3 @@ graph TD
 2. **Recommend**
    - 패턴 기반 추천
    - 유사도 검색
-
-### 자동화 프로세스 (`scheduler.py`)
-1. **일일 처리**
-   - 데이터 정제
-   - AI 피드백 생성
-
-2. **주간 처리**
-   - 주간 요약 생성
-   - 임베딩 생성
