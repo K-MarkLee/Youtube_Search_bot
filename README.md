@@ -2,33 +2,29 @@
 
 ```mermaid
 erDiagram
-    %% 기본 데이터 관계
-    User ||--o{ Diary : "작성"
-    User ||--o{ Schedule : "관리"
-    User ||--o{ Todo : "관리"
-    User ||--o{ Feedback : "받음"
-    User ||--o{ Summary : "생성"
-    User ||--o{ CleanedData : "가짐"
-    User ||--o{ Embedding : "가짐"
-    Summary ||--o{ Embedding : "가짐"
+    %% 핵심 데이터 관계
+    User ||--o{ Diary : writes
+    User ||--o{ Schedule : manages
+    User ||--o{ Todo : manages
+    User ||--o{ Feedback : receives
+    User ||--o{ Summary : has
+    User ||--o{ CleanedData : has
+    User ||--o{ Embedding : has
     
-    %% 데이터 흐름 관계
-    Diary ||--o{ CleanedData : "정제"
-    Schedule ||--o{ CleanedData : "정제"
-    Todo ||--o{ CleanedData : "정제"
-    CleanedData ||--o{ Summary : "요약"
-    CleanedData ||--o{ Feedback : "분석"
-
-    %% AI 서비스 관계
-    Chatbot ||--o{ Schedule : "manage"
-    Chatbot ||--o{ Todo : "manage"
-    Chatbot ||--o{ Diary : "reference"
-    Chatbot ||--o{ Embedding : "reference"
-    Chatbot ||--o{ Summary : "reference"
-    Recommend ||--o{ Schedule : "suggest"
-    Recommend ||--o{ Diary : "analyze"
-    Recommend ||--o{ CleanedData : "analyze"
-    Recommend ||--o{ Embedding : "similarity"
+    %% AI 처리 흐름
+    Diary ||--o{ CleanedData : clean
+    Schedule ||--o{ CleanedData : clean
+    Todo ||--o{ CleanedData : clean
+    CleanedData ||--o{ Summary : summarize
+    Summary ||--o{ Embedding : embed
+    
+    %% AI 서비스
+    AIService ||--o{ Diary : process
+    AIService ||--o{ Schedule : process
+    AIService ||--o{ Todo : process
+    AIService ||--o{ CleanedData : analyze
+    AIService ||--o{ Summary : utilize
+    AIService ||--o{ Embedding : search
 
     User {
         int id PK
@@ -103,96 +99,66 @@ erDiagram
         index idx_embedding_user_type_dates
     }
 
-    %% AI 서비스 컴포넌트 (논리적 엔티티)
-    Chatbot {
-        string llm_processing "LLM based chat processing"
-        string task_management "Schedule and Todo management"
-        string context_response "Context-based response"
-    }
-
-    Recommend {
-        string schedule_suggestion "Schedule recommendations"
-        string similarity_search "Similarity-based search"
-        string pattern_analysis "Pattern analysis"
+    %% AI 서비스 (논리적 엔티티)
+    AIService {
+        string chat "Chatbot Interface"
+        string recommend "Recommendation System"
+        string analyze "Pattern Analysis"
     }
 ```
 
-## 테이블 설명
+## 데이터 흐름도
 
-### User (사용자)
-- 사용자 정보를 저장하는 테이블
-- 모든 다른 테이블의 기준이 되는 메인 테이블
+```mermaid
+graph TD
+    %% 데이터 수집
+    U[User] --> |입력| D[Diary]
+    U --> |입력| S[Schedule]
+    U --> |입력| T[Todo]
+    
+    %% 데이터 처리
+    D & S & T --> |정제| CD[CleanedData]
+    CD --> |분석| F[Feedback]
+    CD --> |요약| SM[Summary]
+    SM --> |벡터화| E[Embedding]
+    
+    %% AI 서비스
+    subgraph AI[AI Service]
+        C[Chatbot]
+        R[Recommend]
+    end
+    
+    %% AI 상호작용
+    CD --> |참조| AI
+    SM --> |참조| AI
+    E --> |검색| AI
+    AI --> |관리| S & T
+    AI --> |생성| F
+```
 
-### Diary (일기)
-- 사용자의 일기를 저장
-- 날짜별로 작성된 일기 내용 관리
-- CleanedData로 정제되어 AI 분석에 사용
-- 챗봇과 추천 시스템의 맥락 정보로 활용
+## 시스템 구성요소
 
-### Schedule (일정)
-- 사용자의 일정을 관리
-- 제목, 내용, 날짜, 시간 정보 포함
-- 고정된 일정 여부(pinned) 표시 가능
-- CleanedData로 정제되어 AI 분석에 사용
+### 데이터 저장소
+- **User**: 사용자 정보
+- **기본 데이터**: Diary, Schedule, Todo
+- **가공 데이터**: CleanedData, Summary, Embedding
+- **AI 결과**: Feedback
 
-### Todo (할일)
-- 사용자의 할일 목록 관리
-- 완료 여부 체크 가능
-- 날짜별로 할일 관리
-- CleanedData로 정제되어 AI 분석에 사용
+### AI 서비스
+- **Chatbot**: 사용자 대화, 일정/할일 관리
+- **Recommend**: 패턴 분석, 일정 추천
 
-### CleanedData (전처리된 데이터)
-- 일기, 일정, 할일 데이터를 전처리하여 저장
-- AI 분석을 위한 정제된 텍스트 보관
-- Summary와 Feedback 생성의 기반 데이터
-- 날짜별로 통합된 사용자 활동 정보 저장
+### 데이터 처리 흐름
+1. **데이터 수집**: 사용자 입력 → 기본 데이터
+2. **데이터 가공**: 기본 데이터 → CleanedData → Summary → Embedding
+3. **AI 처리**: 가공 데이터 활용 → 챗봇 응답/추천
 
-### Feedback (피드백)
-- AI가 생성한 일일 피드백 저장
-- CleanedData를 기반으로 생성
-- 날짜별로 피드백 관리
+### 주요 프로세스
+1. **일일 처리** (`scheduler.py`)
+   - 데이터 정제 및 피드백 생성
 
-### Summary (요약)
-- CleanedData를 기반으로 주간/월간 요약 생성
-- 시작일과 종료일로 기간 관리
-- 요약 타입(주간/월간) 구분
+2. **주간 처리** (`scheduler.py`)
+   - 요약 생성 및 임베딩 생성
 
-### Embedding (임베딩)
-- 요약 텍스트의 벡터 임베딩 저장
-- 유사도 검색을 위한 벡터 데이터 관리
-- Summary와 연결되어 해당 기간의 임베딩 저장
-
-## AI 서비스 컴포넌트
-
-### Chatbot (대화형 인터페이스)
-- LLM 기반 자연어 처리
-- 일정 및 할일 관리 기능
-- 일기, Embedding, Summary를 활용한 맥락 기반 응답
-- 사용자와의 대화를 통한 데이터 관리
-
-### Recommend (추천 시스템)
-- 사용자 패턴 기반 일정 추천
-- 일기와 CleanedData 분석을 통한 패턴 파악
-- Embedding을 활용한 유사도 기반 검색
-
-## 데이터 처리 프로세스
-
-1. 일일 데이터 처리 (`scheduler.py`)
-   - 매일 자정에 전날의 데이터 처리
-   - Diary, Schedule, Todo 데이터를 CleanedData로 정제
-   - 정제된 데이터를 기반으로 Feedback 생성
-
-2. 주간 데이터 처리 (`scheduler.py`)
-   - 매주 월요일에 지난 주의 데이터 처리
-   - CleanedData를 기반으로 주간 Summary 생성
-   - Summary를 기반으로 Embedding 생성
-
-3. 챗봇 상호작용 (`llm_service.py`)
-   - 사용자 입력 의도 분석
-   - Schedule과 Todo 관리
-   - Diary, CleanedData, Summary, Embedding을 활용한 맥락 기반 응답 생성
-
-4. 추천 시스템 (`llm_service.py`)
-   - Embedding을 활용한 유사 일정 검색
-   - Diary와 CleanedData 분석을 통한 사용자 패턴 파악
-   - 맥락 기반 일정 추천
+3. **실시간 처리** (`llm_service.py`)
+   - 챗봇 대화 및 추천
