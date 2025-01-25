@@ -22,9 +22,11 @@ erDiagram
     %% AI 서비스 관계
     Chatbot ||--o{ Schedule : "manage"
     Chatbot ||--o{ Todo : "manage"
+    Chatbot ||--o{ Diary : "reference"
     Chatbot ||--o{ Embedding : "reference"
     Chatbot ||--o{ Summary : "reference"
     Recommend ||--o{ Schedule : "suggest"
+    Recommend ||--o{ Diary : "analyze"
     Recommend ||--o{ CleanedData : "analyze"
     Recommend ||--o{ Embedding : "similarity"
 
@@ -125,6 +127,7 @@ erDiagram
 - 사용자의 일기를 저장
 - 날짜별로 작성된 일기 내용 관리
 - CleanedData로 정제되어 AI 분석에 사용
+- 챗봇과 추천 시스템의 맥락 정보로 활용
 
 ### Schedule (일정)
 - 사용자의 일정을 관리
@@ -164,13 +167,13 @@ erDiagram
 ### Chatbot (대화형 인터페이스)
 - LLM 기반 자연어 처리
 - 일정 및 할일 관리 기능
-- Embedding과 Summary를 활용한 맥락 기반 응답
+- 일기, Embedding, Summary를 활용한 맥락 기반 응답
 - 사용자와의 대화를 통한 데이터 관리
 
 ### Recommend (추천 시스템)
 - 사용자 패턴 기반 일정 추천
+- 일기와 CleanedData 분석을 통한 패턴 파악
 - Embedding을 활용한 유사도 기반 검색
-- CleanedData 분석을 통한 패턴 파악
 
 ## 데이터 처리 프로세스
 
@@ -187,9 +190,9 @@ erDiagram
 3. 챗봇 상호작용 (`llm_service.py`)
    - 사용자 입력 의도 분석
    - Schedule과 Todo 관리
-   - CleanedData, Summary, Embedding을 활용한 맥락 기반 응답 생성
+   - Diary, CleanedData, Summary, Embedding을 활용한 맥락 기반 응답 생성
 
 4. 추천 시스템 (`llm_service.py`)
    - Embedding을 활용한 유사 일정 검색
-   - CleanedData 분석을 통한 사용자 패턴 파악
+   - Diary와 CleanedData 분석을 통한 사용자 패턴 파악
    - 맥락 기반 일정 추천
