@@ -12,24 +12,21 @@ erDiagram
     User ||--o{ Embedding : "가짐"
     Summary ||--o{ Embedding : "가짐"
     
-    %% 데이터 정제 흐름
+    %% 데이터 흐름 관계
     Diary ||--o{ CleanedData : "정제"
     Schedule ||--o{ CleanedData : "정제"
     Todo ||--o{ CleanedData : "정제"
     CleanedData ||--o{ Summary : "요약"
     CleanedData ||--o{ Feedback : "분석"
 
-    %% AI 서비스 흐름
+    %% AI 서비스 관계
     Chatbot ||--o{ Schedule : "관리"
     Chatbot ||--o{ Todo : "관리"
-    Chatbot ||--|| CleanedData : "분석"
-    Chatbot ||--|| Summary : "참조"
-    Chatbot ||--|| Embedding : "검색"
-    
-    Recommend ||--|| CleanedData : "분석"
-    Recommend ||--|| Summary : "참조"
-    Recommend ||--|| Schedule : "추천"
-    Recommend ||--|| Todo : "추천"
+    Chatbot ||--o{ Embedding : "참조"
+    Chatbot ||--o{ Summary : "참조"
+    Recommend ||--o{ Schedule : "추천"
+    Recommend ||--o{ CleanedData : "분석"
+    Recommend ||--o{ Embedding : "유사도"
 
     User {
         int id PK
@@ -104,16 +101,16 @@ erDiagram
         index idx_embedding_user_type_dates
     }
 
-    %% AI 서비스 (논리적 엔티티)
+    %% AI 서비스 컴포넌트 (논리적 엔티티)
     Chatbot {
-        LLM 기반 대화
+        LLM 기반 대화 처리
         일정/할일 관리
         맥락 기반 응답
     }
 
     Recommend {
         일정 추천
-        할일 추천
+        유사도 기반 검색
         패턴 분석
     }
 ```
@@ -162,19 +159,18 @@ erDiagram
 - 유사도 검색을 위한 벡터 데이터 관리
 - Summary와 연결되어 해당 기간의 임베딩 저장
 
-## AI 서비스 설명
+## AI 서비스 컴포넌트
 
 ### Chatbot (대화형 인터페이스)
 - LLM 기반 자연어 처리
-- 일정과 할일 관리 기능
-- CleanedData, Summary, Embedding을 활용한 맥락 기반 응답
+- 일정 및 할일 관리 기능
+- Embedding과 Summary를 활용한 맥락 기반 응답
 - 사용자와의 대화를 통한 데이터 관리
 
 ### Recommend (추천 시스템)
-- 과거 데이터 기반 일정 추천
-- 할일 패턴 분석 및 제안
-- CleanedData와 Summary를 활용한 패턴 분석
-- 사용자 맞춤형 추천 생성
+- 사용자 패턴 기반 일정 추천
+- Embedding을 활용한 유사도 기반 검색
+- CleanedData 분석을 통한 패턴 파악
 
 ## 데이터 처리 프로세스
 
@@ -188,15 +184,12 @@ erDiagram
    - CleanedData를 기반으로 주간 Summary 생성
    - Summary를 기반으로 Embedding 생성
 
-3. AI 서비스 상호작용 (`llm_service.py`)
-   - Chatbot: 사용자 입력 의도 분석 및 데이터 관리
-   - Recommend: 사용자 패턴 분석 및 추천 생성
-   - CleanedData, Summary, Embedding을 활용한 지능형 서비스 제공
+3. 챗봇 상호작용 (`llm_service.py`)
+   - 사용자 입력 의도 분석
+   - Schedule과 Todo 관리
+   - CleanedData, Summary, Embedding을 활용한 맥락 기반 응답 생성
 
-## 인덱스
-- `idx_schedule_date`: 일정 날짜별 검색 최적화
-- `idx_todo_date`: 할일 날짜별 검색 최적화
-- `idx_feedback_date`: 피드백 날짜별 검색 최적화
-- `idx_cleaned_date`: 전처리 데이터 날짜별 검색 최적화
-- `idx_summary_user_type_dates`: 요약 검색 최적화
-- `idx_embedding_user_type_dates`: 임베딩 검색 최적화
+4. 추천 시스템 (`llm_service.py`)
+   - Embedding을 활용한 유사 일정 검색
+   - CleanedData 분석을 통한 사용자 패턴 파악
+   - 맥락 기반 일정 추천
