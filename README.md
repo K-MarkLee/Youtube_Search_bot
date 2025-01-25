@@ -2,21 +2,23 @@
 
 ```mermaid
 erDiagram
-    %% 핵심 데이터 관계
+    %% 사용자 데이터
     User ||--o{ Diary : writes
     User ||--o{ Schedule : manages
     User ||--o{ Todo : manages
-    User ||--o{ Feedback : receives
-    User ||--o{ Summary : has
-    User ||--o{ CleanedData : has
-    User ||--o{ Embedding : has
     
     %% AI 처리 흐름
     Diary ||--o{ CleanedData : clean
     Schedule ||--o{ CleanedData : clean
     Todo ||--o{ CleanedData : clean
     CleanedData ||--o{ Summary : summarize
+    CleanedData ||--o{ Feedback : analyze
     Summary ||--o{ Embedding : embed
+    
+    %% AI 결과
+    User ||--o{ Feedback : receives
+    User ||--o{ Summary : has
+    User ||--o{ Embedding : has
     
     %% AI 서비스
     AIService ||--o{ Diary : process
@@ -62,14 +64,6 @@ erDiagram
         index idx_todo_date
     }
 
-    Feedback {
-        int id PK
-        int user_id FK
-        text feedback
-        date select_date
-        index idx_feedback_date
-    }
-
     CleanedData {
         int id PK
         int user_id FK
@@ -78,11 +72,19 @@ erDiagram
         index idx_cleaned_date
     }
 
+    Feedback {
+        int id PK
+        int user_id FK
+        text feedback "AI generated feedback"
+        date select_date
+        index idx_feedback_date
+    }
+
     Summary {
         int id PK
         int user_id FK
         text summary_text
-        string type
+        string type "weekly/monthly"
         date start_date
         date end_date
         index idx_summary_user_type_dates
@@ -101,26 +103,28 @@ erDiagram
 
     %% AI 서비스 (논리적 엔티티)
     AIService {
-        string chat "Chatbot Interface"
-        string recommend "Recommendation System"
-        string analyze "Pattern Analysis"
+        string chat "Natural Language Interface"
+        string recommend "Pattern-based Recommendations"
+        string analyze "Data Analysis & Feedback"
     }
 ```
 
-## 데이터 흐름도
+## 데이터 처리 흐름도
 
 ```mermaid
 graph TD
-    %% 데이터 수집
-    U[User] --> |입력| D[Diary]
-    U --> |입력| S[Schedule]
-    U --> |입력| T[Todo]
+    %% 사용자 입력
+    U[User] --> |작성| D[Diary]
+    U --> |등록| S[Schedule]
+    U --> |등록| T[Todo]
     
-    %% 데이터 처리
-    D & S & T --> |정제| CD[CleanedData]
-    CD --> |분석| F[Feedback]
-    CD --> |요약| SM[Summary]
-    SM --> |벡터화| E[Embedding]
+    %% AI 처리
+    subgraph Processing[데이터 처리]
+        D & S & T --> |정제| CD[CleanedData]
+        CD --> |분석| F[Feedback]
+        CD --> |요약| SM[Summary]
+        SM --> |벡터화| E[Embedding]
+    end
     
     %% AI 서비스
     subgraph AI[AI Service]
@@ -129,36 +133,42 @@ graph TD
     end
     
     %% AI 상호작용
-    CD --> |참조| AI
+    CD --> |컨텍스트| AI
     SM --> |참조| AI
     E --> |검색| AI
     AI --> |관리| S & T
     AI --> |생성| F
 ```
 
-## 시스템 구성요소
+## 시스템 구성
 
-### 데이터 저장소
-- **User**: 사용자 정보
-- **기본 데이터**: Diary, Schedule, Todo
-- **가공 데이터**: CleanedData, Summary, Embedding
-- **AI 결과**: Feedback
+### 데이터 계층
+1. **사용자 입력 데이터**
+   - `Diary`: 사용자의 일기
+   - `Schedule`: 일정 정보
+   - `Todo`: 할일 목록
+
+2. **AI 처리 데이터**
+   - `CleanedData`: 정제된 통합 데이터
+   - `Summary`: 주간/월간 요약
+   - `Embedding`: 벡터화된 요약
+   - `Feedback`: AI 생성 피드백
 
 ### AI 서비스
-- **Chatbot**: 사용자 대화, 일정/할일 관리
-- **Recommend**: 패턴 분석, 일정 추천
+1. **Chatbot**
+   - 자연어 인터페이스
+   - 일정/할일 관리
+   - 맥락 기반 응답
 
-### 데이터 처리 흐름
-1. **데이터 수집**: 사용자 입력 → 기본 데이터
-2. **데이터 가공**: 기본 데이터 → CleanedData → Summary → Embedding
-3. **AI 처리**: 가공 데이터 활용 → 챗봇 응답/추천
+2. **Recommend**
+   - 패턴 기반 추천
+   - 유사도 검색
 
-### 주요 프로세스
-1. **일일 처리** (`scheduler.py`)
-   - 데이터 정제 및 피드백 생성
+### 자동화 프로세스 (`scheduler.py`)
+1. **일일 처리**
+   - 데이터 정제
+   - AI 피드백 생성
 
-2. **주간 처리** (`scheduler.py`)
-   - 요약 생성 및 임베딩 생성
-
-3. **실시간 처리** (`llm_service.py`)
-   - 챗봇 대화 및 추천
+2. **주간 처리**
+   - 주간 요약 생성
+   - 임베딩 생성
