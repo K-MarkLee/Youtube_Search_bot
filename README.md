@@ -20,13 +20,13 @@ erDiagram
     CleanedData ||--o{ Feedback : "분석"
 
     %% AI 서비스 관계
-    Chatbot ||--o{ Schedule : "관리"
-    Chatbot ||--o{ Todo : "관리"
-    Chatbot ||--o{ Embedding : "참조"
-    Chatbot ||--o{ Summary : "참조"
-    Recommend ||--o{ Schedule : "추천"
-    Recommend ||--o{ CleanedData : "분석"
-    Recommend ||--o{ Embedding : "유사도"
+    Chatbot ||--o{ Schedule : "manage"
+    Chatbot ||--o{ Todo : "manage"
+    Chatbot ||--o{ Embedding : "reference"
+    Chatbot ||--o{ Summary : "reference"
+    Recommend ||--o{ Schedule : "suggest"
+    Recommend ||--o{ CleanedData : "analyze"
+    Recommend ||--o{ Embedding : "similarity"
 
     User {
         int id PK
@@ -103,15 +103,15 @@ erDiagram
 
     %% AI 서비스 컴포넌트 (논리적 엔티티)
     Chatbot {
-        LLM 기반 대화 처리
-        일정/할일 관리
-        맥락 기반 응답
+        string llm_processing "LLM based chat processing"
+        string task_management "Schedule and Todo management"
+        string context_response "Context-based response"
     }
 
     Recommend {
-        일정 추천
-        유사도 기반 검색
-        패턴 분석
+        string schedule_suggestion "Schedule recommendations"
+        string similarity_search "Similarity-based search"
+        string pattern_analysis "Pattern analysis"
     }
 ```
 
