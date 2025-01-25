@@ -9,12 +9,35 @@ erDiagram
     User ||--o{ Summary : "생성"
     User ||--o{ CleanedData : "가짐"
     User ||--o{ Embedding : "가짐"
+    User ||--o{ ChatHistory : "대화"
     Summary ||--o{ Embedding : "가짐"
+    Schedule }o--|| ScheduleRecurrence : "반복"
 
     User {
         int id PK
         string username
         datetime created_at
+    }
+
+    ChatHistory {
+        int id PK
+        int user_id FK
+        text user_message
+        text bot_response
+        string intent_type
+        string action_type
+        datetime created_at
+        index idx_chat_user_date
+    }
+
+    ScheduleRecurrence {
+        int id PK
+        string recurrence_type
+        int interval
+        date start_date
+        date end_date
+        string days_of_week
+        boolean is_active
     }
 
     Diary {
@@ -28,12 +51,14 @@ erDiagram
     Schedule {
         int id PK
         int user_id FK
+        int recurrence_id FK
         string title
         text content
         date select_date
         time time
         boolean pinned
         datetime created_at
+        index idx_schedule_date
     }
 
     Todo {
@@ -43,6 +68,7 @@ erDiagram
         boolean is_completed
         date select_date
         datetime created_at
+        index idx_todo_date
     }
 
     Feedback {
@@ -50,6 +76,7 @@ erDiagram
         int user_id FK
         text feedback
         date select_date
+        index idx_feedback_date
     }
 
     CleanedData {
@@ -57,6 +84,7 @@ erDiagram
         int user_id FK
         date select_date
         text cleaned_text
+        index idx_cleaned_date
     }
 
     Summary {
@@ -87,6 +115,16 @@ erDiagram
 - 사용자 정보를 저장하는 테이블
 - 모든 다른 테이블의 기준이 되는 메인 테이블
 
+### ChatHistory (채팅 기록)
+- 사용자와 챗봇 간의 대화 기록 저장
+- 의도(intent_type)와 행동(action_type) 분석 결과 포함
+- 시간순 조회를 위한 인덱스 포함
+
+### ScheduleRecurrence (일정 반복)
+- 반복되는 일정의 패턴 정의
+- 일간, 주간, 월간 등 다양한 반복 유형 지원
+- 반복 간격과 요일 지정 가능
+
 ### Diary (일기)
 - 사용자의 일기를 저장
 - 날짜별로 작성된 일기 내용 관리
@@ -95,6 +133,7 @@ erDiagram
 - 사용자의 일정을 관리
 - 제목, 내용, 날짜, 시간 정보 포함
 - 고정된 일정 여부(pinned) 표시 가능
+- 반복 일정과 연결 가능
 
 ### Todo (할일)
 - 사용자의 할일 목록 관리
@@ -129,6 +168,15 @@ erDiagram
    - 하나의 요약은 여러 개의 임베딩을 가질 수 있음
    - 각 임베딩은 하나의 요약에 속함
 
+3. Schedule (0..N) - (1) ScheduleRecurrence
+   - 하나의 반복 패턴은 여러 일정에 적용될 수 있음
+   - 일정은 선택적으로 반복 패턴을 가질 수 있음
+
 ## 인덱스
+- `idx_chat_user_date`: 채팅 기록 검색 최적화
+- `idx_schedule_date`: 일정 날짜별 검색 최적화
+- `idx_todo_date`: 할일 날짜별 검색 최적화
+- `idx_feedback_date`: 피드백 날짜별 검색 최적화
+- `idx_cleaned_date`: 전처리 데이터 날짜별 검색 최적화
 - `idx_summary_user_type_dates`: 요약 검색 최적화
 - `idx_embedding_user_type_dates`: 임베딩 검색 최적화
