@@ -9,7 +9,6 @@ erDiagram
     User ||--o{ Summary : "생성"
     User ||--o{ CleanedData : "가짐"
     User ||--o{ Embedding : "가짐"
-    User ||--o{ ChatHistory : "대화"
     Summary ||--o{ Embedding : "가짐"
     Schedule }o--|| ScheduleRecurrence : "반복"
 
@@ -17,17 +16,6 @@ erDiagram
         int id PK
         string username
         datetime created_at
-    }
-
-    ChatHistory {
-        int id PK
-        int user_id FK
-        text user_message
-        text bot_response
-        string intent_type
-        string action_type
-        datetime created_at
-        index idx_chat_user_date
     }
 
     ScheduleRecurrence {
@@ -115,11 +103,6 @@ erDiagram
 - 사용자 정보를 저장하는 테이블
 - 모든 다른 테이블의 기준이 되는 메인 테이블
 
-### ChatHistory (채팅 기록)
-- 사용자와 챗봇 간의 대화 기록 저장
-- 의도(intent_type)와 행동(action_type) 분석 결과 포함
-- 시간순 조회를 위한 인덱스 포함
-
 ### ScheduleRecurrence (일정 반복)
 - 반복되는 일정의 패턴 정의
 - 일간, 주간, 월간 등 다양한 반복 유형 지원
@@ -173,10 +156,17 @@ erDiagram
    - 일정은 선택적으로 반복 패턴을 가질 수 있음
 
 ## 인덱스
-- `idx_chat_user_date`: 채팅 기록 검색 최적화
 - `idx_schedule_date`: 일정 날짜별 검색 최적화
 - `idx_todo_date`: 할일 날짜별 검색 최적화
 - `idx_feedback_date`: 피드백 날짜별 검색 최적화
 - `idx_cleaned_date`: 전처리 데이터 날짜별 검색 최적화
 - `idx_summary_user_type_dates`: 요약 검색 최적화
 - `idx_embedding_user_type_dates`: 임베딩 검색 최적화
+
+## 챗봇 상호작용
+챗봇은 별도의 테이블 없이 위 데이터 모델들을 활용하여 다음과 같은 기능을 제공합니다:
+1. 일정 관리: Schedule 테이블을 통해 일정 추가/수정/삭제
+2. 할일 관리: Todo 테이블을 통해 할일 추가/수정/삭제
+3. 일기 조회: Diary 테이블의 내용 조회
+4. 피드백 제공: Feedback 테이블에 저장된 AI 피드백 조회
+5. 요약 조회: Summary 테이블의 주간/월간 요약 제공
